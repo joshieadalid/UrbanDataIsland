@@ -1,0 +1,6 @@
+numpy
+opencv-python
+py-opc-ng
+pyusbiss
+pyubx2
+pyserial
