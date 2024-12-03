@@ -52,37 +52,57 @@ def main(device_port: dict, waiting_time: dict):
     """
     Run everything in separate processes.
     """
+    processes = []
+    
     try:
-        # Asynchronously obtain instances
-        print("Obtaining devices...")
-        # Prepare multiprocessing for running both instances
-        camera_process = multiprocessing.Process(target=run_camera, args=(waiting_time["camera"],))
-        opc_process = multiprocessing.Process(target=run_opc, args=(device_port["OPC"], waiting_time["opc"]))
-        gps_process = multiprocessing.Process(target=run_gps, args=(device_port["GPS"],))
+        # Camera process
+        try:
+            camera_process = multiprocessing.Process(target=run_camera, args=(waiting_time["camera"],))
+            camera_process.start()
+            processes.append(camera_process)
+            print("Camera process started successfully.")
+        except Exception as e:
+            print(f"An error occurred while starting the camera process: {e}")
 
-        # Start both processes
-        camera_process.start()
-        opc_process.start()
-        gps_process.start()
+        # OPC process
+        try:
+            opc_process = multiprocessing.Process(target=run_opc, args=(device_port["OPC"], waiting_time["opc"]))
+            opc_process.start()
+            processes.append(opc_process)
+            print("OPC process started successfully.")
+        except Exception as e:
+            print(f"An error occurred while starting the OPC process: {e}")
 
-        # Wait for processes to complete
-        camera_process.join()
-        opc_process.join()
-        gps_process.join()
+        # GPS process
+        try:
+            gps_process = multiprocessing.Process(target=run_gps, args=(device_port["GPS"],))
+            gps_process.start()
+            processes.append(gps_process)
+            print("GPS process started successfully.")
+        except Exception as e:
+            print(f"An error occurred while starting the GPS process: {e}")
+        
+        # Wait for all started processes to complete
+        for process in processes:
+            process.join()
 
     except Exception as e:
-        print(f"An error occurred in the main function: {e}")
+        print(f"An unexpected error occurred in the main function: {e}")
 
 
 if __name__ == "__main__":
-    devices = find_devices()
-    if not devices:
-        raise Exception("Make sure the gps and opc are conencted")
-    
-    print("All devices have been found correctly")
-    waiting_time = {"camera":1, "opc":1}
-    for key in waiting_time:
-        val = int(input(f"Seconds to wait between {key} records: "))
-        waiting_time[key] = val
- 
-    main(devices, waiting_time)
+    try:
+        devices = find_devices()
+        if not devices:
+            raise Exception("Make sure the GPS and OPC are connected")
+        
+        print("All devices have been found correctly")
+        waiting_time = {"camera": 1, "opc": 1}
+        for key in waiting_time:
+            val = int(input(f"Seconds to wait between {key} records: "))
+            waiting_time[key] = val
+        
+        main(devices, waiting_time)
+    except Exception as e:
+        print(f"Error: {e}")
+        input("Press Enter to exit...")
